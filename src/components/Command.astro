@@ -1,0 +1,82 @@
+---
+// A command to copy. The strip with the copy button appears only when the
+// script runs; without it the command is still plain text to select. The
+// button sits above the code, not over it, so long lines need no room
+// reserved beside them.
+interface Props {
+  lines: string[];
+  label: string;
+}
+
+const { lines, label } = Astro.props;
+---
+
+<div class="command" data-command>
+  <div class="strip" hidden><button type="button">Copy</button></div>
+  <pre aria-label={label}><code>{lines.join("\n")}</code></pre>
+</div>
+
+<script>
+  for (const block of document.querySelectorAll<HTMLElement>("[data-command]")) {
+    const strip = block.querySelector<HTMLElement>(".strip");
+    const button = block.querySelector("button");
+    const code = block.querySelector("code");
+    if (!strip || !button || !code || !navigator.clipboard) continue;
+    strip.hidden = false;
+    button.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(code.textContent ?? "");
+        button.textContent = "Copied";
+      } catch {
+        button.textContent = "Select and copy";
+      }
+      setTimeout(() => (button.textContent = "Copy"), 2000);
+    });
+  }
+</script>
+
+<style>
+  .command {
+    background: var(--stone);
+    border: 1px solid var(--seam);
+  }
+
+  .strip {
+    display: flex;
+    justify-content: flex-end;
+    border-bottom: 1px solid var(--seam);
+  }
+
+  .strip[hidden] {
+    display: none;
+  }
+
+  pre {
+    overflow-x: auto;
+    padding: 1rem 1.25rem;
+    line-height: 1.6;
+  }
+
+  pre code {
+    white-space: pre;
+  }
+
+  button {
+    padding: 0.2rem 0.85rem;
+    border: 0;
+    border-left: 1px solid var(--seam);
+    background: none;
+    color: var(--faint);
+    font: inherit;
+    font-size: var(--small);
+    cursor: pointer;
+  }
+
+  button:hover {
+    color: var(--paper);
+  }
+
+  button:focus-visible {
+    outline-offset: -2px;
+  }
+</style>

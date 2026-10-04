@@ -1,0 +1,332 @@
+---
+// The screen xunhen browse draws for testdata/undo/abandoned-branch in the
+// xunhen repository, at 96 by 12, transcribed from the program itself: the
+// rows, previews, diffs, and status lines below are its own text. The tree
+// and the mode are radio groups, so the screen works without JavaScript; the
+// script adds the program's own j, k, p, and d keys.
+
+const title = " xunhen browse  history.undo  base base.bin  reference node 3";
+const keys = { before: " q quit  ? help  tab pane  ", after: "  space pin  g go to  e export  r reload" };
+const reference = 3;
+const height = 8;
+
+// Rows in recorded branch order. Node 2 is the other child of node 1, so
+// the tree starts a branch for it one level deeper.
+const rows = [
+  { id: 0, text: "0  root" },
+  { id: 1, text: "1  09-19 00:04" },
+  { id: 3, text: "3  09-19 00:04 [ref] [from]" },
+  { id: 2, text: "  `- 2  09-19 00:04" },
+];
+
+const recorded = "recorded 2026-09-19 00:04:48 CEST, 3 lines";
+const states: Record<number, { header: string; lines: string[] }> = {
+  0: { header: "Node 0, retained root, time unknown, 3 lines", lines: ["package sample", "", "// seed"] },
+  1: { header: `Node 1, ${recorded}`, lines: ["package sample", "", "// common"] },
+  2: { header: `Node 2, ${recorded}`, lines: ["package sample", "", "func experiment() int { return 42 }"] },
+  3: { header: `Node 3, ${recorded}`, lines: ["package sample", "", "func chosen() int { return 1 }"] },
+};
+
+type Line = { faint?: string; text: string };
+
+function preview(id: number): Line[] {
+  const { lines } = states[id];
+  return lines.map((text, i) => ({ faint: `${i + 1} `, text }));
+}
+
+function compare(id: number): Line[] {
+  if (id === reference) {
+    return [{ text: "The two states are identical." }];
+  }
+  const to = states[id].lines.at(-1);
+  return ["@@ -1,3 +1,3 @@", " package sample", " ", `-${states[reference].lines.at(-1)}`, `+${to}`].map((text) => ({
+    text,
+  }));
+}
+
+function header(id: number, mode: string) {
+  if (mode === "preview") return states[id].header;
+  return id === reference
+    ? `Node ${reference} -> node ${id}: identical states`
+    : `Node ${reference} -> node ${id}: 1 hunk`;
+}
+
+function status(id: number, mode: string) {
+  return mode === "preview" ? ` Previewing node ${id}` : ` Comparing node ${reference} with node ${id}`;
+}
+
+const modes = ["preview", "compare"] as const;
+const panels = rows.flatMap(({ id }) =>
+  modes.map((mode) => {
+    const body = mode === "preview" ? preview(id) : compare(id);
+    const blank: Line[] = Array.from({ length: height - 1 - body.length }, () => ({ text: "" }));
+    return { id, mode, header: header(id, mode), body: [...body, ...blank], status: status(id, mode) };
+  }),
+);
+---
+
+<figure class="browse">
+  <div class="screen" data-browse>
+    <div class="title" aria-hidden="true">{title}</div>
+    <div class="body">
+      <fieldset class="tree">
+        <legend class="visually-hidden">Select a node of the example history</legend>
+        {
+          rows.map((row) => (
+            <label class="row"><input class="visually-hidden" type="radio" name="node" value={row.id} checked={row.id === reference} /><span class="mark" aria-hidden="true" /><span>{row.text}</span></label>
+          ))
+        }
+      </fieldset>
+      <div class="pane" aria-live="polite">
+        {
+          panels.map((panel) => (
+            <div class="panel" data-node={panel.id} data-mode={panel.mode}>
+              <span class="line"><span class="bar" aria-hidden="true">|</span><b>{panel.header}</b></span>
+              {panel.body.map((line) => (
+                <span class="line"><span class="bar" aria-hidden="true">|</span>{line.faint && <span class="faint">{line.faint}</span>}{line.text}</span>
+              ))}
+            </div>
+          ))
+        }
+      </div>
+    </div>
+    <div class="status">
+      {
+        panels.map((panel) => (
+          <span class="panel" data-node={panel.id} data-mode={panel.mode}>
+            {panel.status}
+          </span>
+        ))
+      }
+    </div>
+    <fieldset class="keys">
+      <legend class="visually-hidden">Show the selected node's text, or compare it with node 3</legend>
+      <div class="line"><span aria-hidden="true">{keys.before}</span><label class="key"><input class="visually-hidden" type="radio" name="mode" value="preview" checked />p preview</label><span aria-hidden="true">{"  "}</span><label class="key"><input class="visually-hidden" type="radio" name="mode" value="compare" />d compare</label><span aria-hidden="true">{keys.after}</span></div>
+    </fieldset>
+  </div>
+  <figcaption>
+    A history from xunhen's test corpus, shown as <code>xunhen browse</code> shows it. Node 2 is an experiment that was
+    undone and never saved. Select it, then compare it with node 3, the version that was saved.
+  </figcaption>
+</figure>
+
+<script>
+  // The program's own keys, while the screen has focus: j and k move through
+  // the tree, p previews, and d compares.
+  for (const screen of document.querySelectorAll<HTMLElement>("[data-browse]")) {
+    const nodes = [...screen.querySelectorAll<HTMLInputElement>('input[name="node"]')];
+    const mode = (value: string) => screen.querySelector<HTMLInputElement>(`input[name="mode"][value="${value}"]`);
+    screen.addEventListener("keydown", (event) => {
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      const at = nodes.findIndex((node) => node.checked);
+      const next = { j: nodes[at + 1], k: nodes[at - 1], p: mode("preview"), d: mode("compare") }[event.key];
+      if (!next) return;
+      next.checked = true;
+      if (next.name === "node") next.focus();
+      event.preventDefault();
+    });
+  }
+</script>
+
+<style>
+  .browse {
+    margin: 0;
+    container: browse / inline-size;
+  }
+
+  .screen {
+    /* The containing block for the hidden radios, which would otherwise
+       escape the scroll box and widen the page. */
+    position: relative;
+    overflow-x: auto;
+    padding: 0.75rem 1ch;
+    background: var(--stone);
+    border: 1px solid var(--seam);
+    font-family: var(--mono);
+    font-size: var(--small);
+    line-height: 1.5;
+  }
+
+  /* Only the text lines keep their spaces; the template's own whitespace
+     between elements must not draw anything. */
+  .title,
+  .row,
+  .line,
+  .status > .panel {
+    white-space: pre;
+  }
+
+  .screen > * {
+    width: 96ch;
+  }
+
+  .title {
+    font-weight: 600;
+  }
+
+  .body {
+    display: flex;
+  }
+
+  fieldset {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .tree {
+    display: flex;
+    flex-direction: column;
+    width: 32ch;
+    flex: none;
+  }
+
+  .row {
+    display: block;
+    cursor: pointer;
+  }
+
+  .mark::before {
+    content: "  ";
+  }
+
+  /* The selected row, in reverse video as the program draws it. */
+  .row:has(:checked) {
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  .row:has(:checked) .mark::before {
+    content: "> ";
+  }
+
+  .row:not(:has(:checked)):hover {
+    color: var(--paper);
+    text-decoration: underline;
+    text-decoration-color: var(--faint);
+  }
+
+  /* Focus lands on the checked radio, so a focused row is always the
+     reverse-video one: an inset ink frame shows on it without covering the
+     pane's separator. */
+  .row:has(:focus-visible) {
+    outline: 2px solid var(--ink);
+    outline-offset: -4px;
+  }
+
+  .key:has(:focus-visible) {
+    outline: 2px solid var(--faint);
+    outline-offset: 2px;
+  }
+
+  .pane {
+    flex: 1;
+  }
+
+  .panel {
+    display: none;
+  }
+
+  .line {
+    display: block;
+  }
+
+  .bar,
+  .faint {
+    color: var(--faint);
+  }
+
+  .pane b,
+  .title {
+    font-weight: 600;
+  }
+
+  /* Show the panel for the selected node in the selected mode. */
+  .screen:has(input[name="node"][value="0"]:checked) .panel[data-node="0"],
+  .screen:has(input[name="node"][value="1"]:checked) .panel[data-node="1"],
+  .screen:has(input[name="node"][value="2"]:checked) .panel[data-node="2"],
+  .screen:has(input[name="node"][value="3"]:checked) .panel[data-node="3"] {
+    display: block;
+  }
+
+  .screen:has(input[name="mode"][value="preview"]:checked) .panel[data-mode="compare"],
+  .screen:has(input[name="mode"][value="compare"]:checked) .panel[data-mode="preview"] {
+    display: none;
+  }
+
+  .keys {
+    display: block;
+    color: var(--faint);
+  }
+
+  .key {
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .key:hover,
+  .key:has(:checked) {
+    color: var(--paper);
+  }
+
+  .key:has(:checked) {
+    font-weight: 600;
+  }
+
+  figcaption {
+    max-width: var(--measure);
+    margin-top: 1rem;
+    color: var(--faint);
+    font-size: var(--small);
+  }
+
+  /* The screen runs edge to edge on a phone, past the column's seam and
+     gutters. */
+  @media (max-width: 52rem) {
+    .browse {
+      --inset-left: calc(var(--gutter) + 1.25rem + 1px);
+      margin-inline: calc(-1 * var(--inset-left)) calc(-1 * var(--gutter));
+    }
+
+    .screen {
+      border-inline: 0;
+    }
+
+    figcaption {
+      padding-inline: var(--inset-left) var(--gutter);
+    }
+  }
+
+  /* Where the 96 columns do not fit, the pane goes under the tree, as a
+     narrow terminal shows one pane at a time, so a selected row's text
+     stays in view. */
+  @container browse (max-width: 52rem) {
+    .screen > * {
+      width: auto;
+      min-width: 32ch;
+    }
+
+    .body {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .tree {
+      width: 100%;
+    }
+
+    .row {
+      max-width: 32ch;
+    }
+
+    /* Chrome lines wrap to the screen; only text from the file keeps its
+       exact width and scrolls. */
+    .title,
+    .keys .line,
+    .status > .panel,
+    .line:has(b) {
+      white-space: pre-wrap;
+    }
+  }
+</style>

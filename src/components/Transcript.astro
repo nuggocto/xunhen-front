@@ -1,0 +1,37 @@
+---
+// A command and what xunhen printed for it, copied from a real run on the
+// example history in the xunhen repository, not written by hand.
+interface Props {
+  command: string;
+  output: string[];
+  label: string;
+}
+
+const { command, output, label } = Astro.props;
+---
+
+<figure class="transcript">
+  <pre aria-label={label}><code><span class="prompt" aria-hidden="true">$ </span>{command}{"\n"}{output.join("\n")}</code></pre>
+</figure>
+
+<style>
+  .transcript {
+    margin: 0;
+    overflow-x: auto;
+    background: var(--stone);
+    border: 1px solid var(--seam);
+  }
+
+  pre {
+    padding: 1rem 1.25rem;
+    line-height: 1.6;
+  }
+
+  code {
+    white-space: pre;
+  }
+
+  .prompt {
+    color: var(--faint);
+  }
+</style>

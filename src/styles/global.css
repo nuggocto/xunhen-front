@@ -1,0 +1,201 @@
+/*
+ * The site follows the rule xunhen's terminal browser follows: no colour.
+ * Emphasis is bold, faint, or reverse video, and reverse video always means
+ * "selected": the chosen tree row, the current page tab, the seal.
+ */
+@import "@fontsource-variable/newsreader/opsz.css";
+@import "@fontsource-variable/newsreader/opsz-italic.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/600.css";
+
+:root {
+  color-scheme: dark;
+
+  /* An ink rubbing: inked paper, and the pale traces that come through. */
+  --ink: #1b1a17;
+  --stone: #121110;
+  --paper: #e7e2d5;
+  --faint: #8d887d;
+  --seam: #36342e;
+
+  --serif: "Newsreader Variable", Georgia, serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  /* Three sizes, no more. */
+  --small: 0.875rem;
+  --text: 1.125rem;
+  --display: clamp(6.5rem, 14vw, 11.5rem);
+
+  --margin: 15rem;
+  --gutter: clamp(1.25rem, 4vw, 3rem);
+  --measure: 36rem;
+  --page: 90rem;
+
+  /* Paper grain: fine speckle in the paper colour at a few percent. */
+  --fibre: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .91 0 0 0 0 .89 0 0 0 0 .84 0 0 0 .14 -.04'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--ink);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--ink) var(--fibre);
+  color: var(--paper);
+  font-family: var(--serif);
+  font-size: var(--text);
+  line-height: 1.6;
+  font-optical-sizing: auto;
+}
+
+main {
+  flex: 1;
+}
+
+::selection {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-size: var(--text);
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+p,
+ul,
+ol,
+dl,
+pre {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration-color: var(--faint);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+a:hover {
+  text-decoration-color: var(--paper);
+}
+
+:focus-visible {
+  outline: 2px solid var(--paper);
+  outline-offset: 3px;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: var(--small);
+}
+
+.faint {
+  color: var(--faint);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/*
+ * The ledger: a margin column for what names a section, and a text column
+ * for the section itself, split by the faint seam that splits the tree from
+ * the text in xunhen browse.
+ */
+.ledger {
+  display: grid;
+  grid-template-columns: var(--margin) minmax(0, 1fr);
+  width: 100%;
+  max-width: var(--page);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.ledger > .margin {
+  padding-right: 2rem;
+  text-align: right;
+}
+
+.ledger > .column {
+  min-width: 0;
+  padding-left: 2.5rem;
+  border-left: 1px solid var(--seam);
+}
+
+.prose > * + * {
+  margin-top: 1rem;
+}
+
+.prose {
+  max-width: var(--measure);
+}
+
+/*
+ * A section's text at reading width, and beside it what the text is about:
+ * the program's own output, a setting, a command. They stack on narrower
+ * screens, text first.
+ */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem 3.5rem;
+  align-items: start;
+}
+
+/* Side by side once the side column can hold the widest transcript line
+   (22rem) and the text column the longest command beside it; below that
+   they stack, each at full width. */
+@media (min-width: 84rem) {
+  .split {
+    grid-template-columns: minmax(0, var(--measure)) minmax(22rem, 1fr);
+  }
+}
+
+/* A short expression reads as one piece; a line breaks around it instead,
+   where the column is wide enough to hold the longest one. */
+@media (min-width: 30rem) {
+  .prose code {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 52rem) {
+  .ledger {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ledger > .margin {
+    padding-right: 0;
+    text-align: left;
+  }
+
+  .ledger > .column {
+    padding-left: 1.25rem;
+  }
+}

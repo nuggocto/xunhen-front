@@ -1,0 +1,169 @@
+---
+import { getCollection, render } from "astro:content";
+import Base from "../layouts/Base.astro";
+
+// Unreleased notes first, then releases, newest first.
+const entries = (await getCollection("changelog")).sort((a, b) => {
+  if (a.data.version === "unreleased") return -1;
+  if (b.data.version === "unreleased") return 1;
+  return (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0);
+});
+const released = entries.some((entry) => entry.data.version !== "unreleased");
+
+const day = new Intl.DateTimeFormat("en", { dateStyle: "long", timeZone: "UTC" });
+
+const rendered = await Promise.all(
+  entries.map(async (entry) => {
+    const unreleased = entry.data.version === "unreleased";
+    return {
+      entry,
+      unreleased,
+      anchor: unreleased ? "unreleased" : `v${entry.data.version}`,
+      heading: unreleased ? "Unreleased" : `v${entry.data.version}`,
+      Content: (await render(entry)).Content,
+    };
+  }),
+);
+---
+
+<Base
+  title="Changelog: xunhen"
+  description="Every release of xunhen, newest first, with what was added, changed, and fixed."
+>
+  <section class="ledger intro" aria-labelledby="changelog-title">
+    <h1 class="margin" id="changelog-title">Changelog</h1>
+    <div class="column split">
+      <p class="prose">Every release of xunhen, newest first, with what it added, changed, fixed, or removed.</p>
+      {
+        !released && (
+          <p class="prose">
+            No release has been published yet. The notes below describe what the first one will contain, and may still
+            change.
+          </p>
+        )
+      }
+    </div>
+  </section>
+
+  {
+    rendered.map(({ entry, unreleased, anchor, heading, Content }) => (
+      <section class="ledger release" id={anchor} aria-labelledby={`${anchor}-title`}>
+        <div class="margin">
+          <h2 id={`${anchor}-title`}>
+            <a href={`#${anchor}`}>{heading}</a>
+          </h2>
+          {unreleased ? (
+            <p class="faint">Not in a release yet</p>
+          ) : (
+            <p class="faint">
+              <time datetime={entry.data.date?.toISOString().slice(0, 10)}>{entry.data.date && day.format(entry.data.date)}</time>
+            </p>
+          )}
+          {entry.data.release && (
+            <p>
+              <a class="faint" href={entry.data.release}>
+                Downloads and source
+              </a>
+            </p>
+          )}
+        </div>
+        <div class="column notes">
+          <Content />
+        </div>
+      </section>
+    ))
+  }
+</Base>
+
+<style>
+  section.ledger > .margin,
+  section.ledger > .column {
+    padding-block: 3rem;
+  }
+
+  .intro > .margin,
+  .intro > .column {
+    padding-block: 2rem 1rem;
+  }
+
+  .release h2 a {
+    text-decoration: none;
+  }
+
+  .release h2 a:hover {
+    text-decoration: underline;
+  }
+
+  .release:target h2 a {
+    background: var(--paper);
+    color: var(--ink);
+    padding-inline: 0.35rem;
+  }
+
+  .margin .faint {
+    font-size: var(--small);
+  }
+
+  /*
+   * A release's notes: the first category, usually what was added, on the
+   * left; the rest stacked on the right. Each category is a ### heading and
+   * what follows it, so the split goes by heading order, with no wrapper
+   * element. The first category floats; the others flow beside it from the
+   * top, each column as long as its own notes.
+   */
+  .notes {
+    display: flow-root;
+  }
+
+  .notes :global(h3) {
+    margin: 1.75rem 0 1rem;
+  }
+
+  .notes > :global(h3:first-child) {
+    margin-top: 0;
+  }
+
+  @media (min-width: 84rem) {
+    .notes > :global(*) {
+      float: left;
+      clear: left;
+      width: min(55%, var(--measure));
+    }
+
+    .notes > :global(:is(h3:nth-of-type(2), h3:nth-of-type(2) ~ *)) {
+      float: none;
+      clear: none;
+      width: auto;
+      max-width: var(--measure);
+      margin-left: calc(min(55%, var(--measure)) + 3.5rem);
+    }
+
+    .notes > :global(h3:nth-of-type(2)) {
+      margin-top: 0;
+    }
+  }
+
+  @media (min-width: 30rem) {
+    .notes :global(code) {
+      white-space: nowrap;
+    }
+  }
+
+  .notes :global(ul) {
+    padding-left: 1.25rem;
+  }
+
+  .notes :global(li + li) {
+    margin-top: 0.6rem;
+  }
+
+  @media (max-width: 52rem) {
+    section.ledger > .margin {
+      padding-bottom: 1rem;
+    }
+
+    section.ledger > .column {
+      padding-top: 0;
+    }
+  }
+</style>

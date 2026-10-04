@@ -1,0 +1,5 @@
+# Dependencies may not run install scripts unless listed here as true.
+# esbuild's script only checks and links its binary; esbuild runs from its
+# platform package without it, so the site builds with it off.
+allowBuilds:
+  esbuild: false

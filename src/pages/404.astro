@@ -1,0 +1,30 @@
+---
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="Page not found: xunhen" description="This page does not exist on xunhen.org.">
+  <section class="ledger missing" aria-labelledby="missing-title">
+    <h1 class="margin" id="missing-title">Not found</h1>
+    <div class="column prose">
+      <p>No page exists at this address. It may have moved, or the link may be mistyped.</p>
+      <p><a href="/">Go to the home page</a> or <a href="/changelog/">read the changelog</a>.</p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .missing > .margin,
+  .missing > .column {
+    padding-block: 2rem 4rem;
+  }
+
+  @media (max-width: 52rem) {
+    .missing > .margin {
+      padding-bottom: 1rem;
+    }
+
+    .missing > .column {
+      padding-top: 0;
+    }
+  }
+</style>

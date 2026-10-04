@@ -1,0 +1,190 @@
+---
+import "../styles/global.css";
+import Brush from "../components/Brush.astro";
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const repository = "https://github.com/nuggocto/xunhen";
+
+const tabs = [
+  { href: "/", label: "Home" },
+  { href: "/changelog/", label: "Changelog" },
+];
+const current = Astro.url.pathname.replace(/\/?$/, "/");
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#1b1a17" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="xunhen" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+  </head>
+  <body>
+    <a class="skip visually-hidden" href="#content">Skip to content</a>
+    <header class="ledger masthead">
+      <div class="margin">
+        <a class="identity" href="/">
+          <Brush class="seal" />
+          <span class="name">xunhen</span>
+        </a>
+      </div>
+      <nav class="column" aria-label="Site">
+        <ul class="tabs">
+          {
+            tabs.map((tab) => (
+              <li>
+                <a href={tab.href} aria-current={current === tab.href ? "page" : undefined}>
+                  {tab.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+        <a class="source" href={repository}>Source on GitHub</a>
+      </nav>
+    </header>
+
+    <main id="content">
+      <slot />
+    </main>
+
+    <footer class="ledger colophon">
+      <div class="margin"></div>
+      <div class="column">
+        <p>
+          xunhen is free software under the <a href={`${repository}/blob/shrek/LICENSE`}>Apache License 2.0</a>. It reads
+          Neovim's undo files and never changes them.
+        </p>
+        <p>
+          寻痕 is set in Ma Shan Zheng, prose in Newsreader, and terminal text in IBM Plex Mono.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>
+
+<style>
+  .skip:focus {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+    clip-path: none;
+    background: var(--paper);
+    color: var(--ink);
+    z-index: 1;
+  }
+
+  .masthead {
+    font-size: var(--small);
+  }
+
+  .masthead > .margin,
+  .masthead > .column {
+    padding-block: 1.75rem;
+  }
+
+  .identity {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+  }
+
+  /* The seal: the two characters in reverse video, as a chop is cut. */
+  .identity :global(.seal) {
+    width: 1.25rem;
+    height: 2.5rem;
+    padding: 0.2rem;
+    box-sizing: content-box;
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  .name {
+    font-weight: 650;
+    letter-spacing: 0.02em;
+  }
+
+  .masthead nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tabs a {
+    display: block;
+    padding: 0.35rem 0.85rem;
+    color: var(--faint);
+    text-decoration: none;
+  }
+
+  .tabs a:hover {
+    color: var(--paper);
+  }
+
+  .tabs a[aria-current="page"] {
+    background: var(--paper);
+    color: var(--ink);
+    font-weight: 650;
+  }
+
+  .source {
+    color: var(--faint);
+  }
+
+  .colophon {
+    margin-top: 6rem;
+    font-size: var(--small);
+    color: var(--faint);
+  }
+
+  .colophon > .column {
+    padding-block: 2.5rem 3rem;
+  }
+
+  .colophon p + p {
+    margin-top: 0.5rem;
+  }
+
+  @media (max-width: 52rem) {
+    .masthead > .margin {
+      padding-bottom: 0;
+    }
+
+    .masthead > .column {
+      padding-top: 1rem;
+    }
+
+    .colophon > .margin {
+      display: none;
+    }
+  }
+</style>

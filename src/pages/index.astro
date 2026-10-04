@@ -1,0 +1,299 @@
+---
+import Base from "../layouts/Base.astro";
+import Brush from "../components/Brush.astro";
+import Browse from "../components/Browse.astro";
+import Command from "../components/Command.astro";
+import Transcript from "../components/Transcript.astro";
+
+const docs = "https://github.com/nuggocto/xunhen/blob/shrek/docs";
+
+// Each channel's note: plain text, with the parts in `code` set as code.
+const channels = [
+  { name: "Release archive", anchor: "release-archive", note: ["with checksums, into ", ["~/.local/bin"], " without root"] },
+  { name: "Nix flake", anchor: "nix-and-nixos", note: ["for a user profile or a NixOS configuration"] },
+  { name: "AUR package", anchor: "arch-user-repository", note: ["built with ", ["makepkg"]] },
+  { name: "Go source", anchor: "go-source", note: ["with ", ["go install"]] },
+];
+
+const commands = [
+  { command: "xunhen inspect retry.go", does: "Lists the retained states, their branches, and when each was recorded." },
+  { command: "xunhen show retry.go --node 2", does: "Rebuilds one state as text. With --raw, it writes the exact text for a file." },
+  { command: "xunhen diff retry.go --from 2 --to 3", does: "Compares two states as a unified diff." },
+  { command: "xunhen browse retry.go", does: "Does all three in the terminal, as above." },
+];
+---
+
+<Base
+  title="xunhen: see the code you undid in Neovim"
+  description="xunhen reads Neovim's undo files, including branches you undid and never saved, and lets you browse, rebuild, and compare every state they kept. Read-only, for Linux."
+>
+  <section class="ledger hero" aria-labelledby="hero-title">
+    <div class="margin">
+      <Brush class="brush" />
+    </div>
+    <div class="column hero-grid">
+      <div class="prose pitch">
+        <p class="verse">New branches grow beneath the brush; look back, and seek old traces.</p>
+        <h1 id="hero-title">See the code you undid.</h1>
+        <p>
+          Undo a change in Neovim, write something else, and the first version leaves the screen. With{" "}
+          <code>'undofile'</code> on, Neovim may still keep it on disk, on a branch of the undo tree that never reached a
+          file or git. xunhen reads that history and shows every state it kept, without changing anything.
+        </p>
+      </div>
+      <aside class="never" aria-labelledby="never">
+        <h2 id="never">What it never does</h2>
+        <ul>
+          <li>It never writes to your undo files or source files. Text you export goes where you redirect it.</li>
+          <li>It never starts Neovim, git, or a shell.</li>
+          <li>It never guesses where your undo files are. You name the directories.</li>
+          <li>It runs as one static executable on Linux x86-64, with no runtime dependencies.</li>
+        </ul>
+      </aside>
+      <div class="demo">
+        <Browse />
+      </div>
+    </div>
+  </section>
+
+  <section class="ledger" aria-labelledby="example">
+    <h2 class="margin" id="example">The example, step by step</h2>
+    <div class="column split">
+      <div class="prose">
+        <ol class="steps">
+          <li>The last line of <code>retry.go</code> became <code>// common</code>. <span class="faint">Node 1.</span></li>
+          <li>
+            That line became an experiment, <code>func experiment() int &#123; return 42 &#125;</code>.{" "}
+            <span class="faint">Node 2.</span>
+          </li>
+          <li>The experiment was undone before the file was ever saved.</li>
+          <li>
+            A different fix, <code>func chosen() int &#123; return 1 &#125;</code>, was written and saved.{" "}
+            <span class="faint">Node 3.</span>
+          </li>
+        </ol>
+        <p>
+          Git could only ever have seen node 3. The experiment exists nowhere but the undo file, and xunhen rebuilds it from
+          there.
+        </p>
+      </div>
+      <Transcript
+        label="xunhen show rebuilding node 2"
+        command="xunhen show retry.go --node 2"
+        output={["package sample", "", "func experiment() int { return 42 }"]}
+      />
+    </div>
+  </section>
+
+  <section class="ledger" aria-labelledby="commands">
+    <h2 class="margin" id="commands">Commands</h2>
+    <div class="column split">
+      <div class="prose">
+        <p>
+          Every command takes the source file and finds its history in the undo directories you name, once in your shell
+          or with <code>--undo-dir</code>:
+        </p>
+        <Command label="Name Neovim's undo directory" lines={['export XUNHEN_UNDO_DIR="$HOME/.local/state/nvim/undo"']} />
+        <dl class="commands">
+          {
+            commands.map((c) => (
+              <div>
+                <dt>
+                  <code>{c.command}</code>
+                </dt>
+                <dd>{c.does}</dd>
+              </div>
+            ))
+          }
+        </dl>
+        <p>
+          <code>:echo &amp;undodir</code> in Neovim prints where your undo files are. The{" "}
+          <a href={`${docs}/usage.md`}>usage guide</a> walks through a complete recovery and lists every flag.
+        </p>
+      </div>
+      <Transcript
+        label="xunhen diff comparing the experiment with the saved fix"
+        command="xunhen diff retry.go --from 2 --to 3"
+        output={[
+          "--- node 2",
+          "+++ node 3",
+          "@@ -1,3 +1,3 @@",
+          " package sample",
+          " ",
+          "-func experiment() int { return 42 }",
+          "+func chosen() int { return 1 }",
+        ]}
+      />
+    </div>
+  </section>
+
+  <section class="ledger" aria-labelledby="survives">
+    <h2 class="margin" id="survives">What survives</h2>
+    <div class="column split">
+      <div class="prose">
+        <ul>
+          <li>
+            Only history Neovim wrote to disk. With <code>'undofile'</code> on, Neovim writes the undo file each time you
+            save.
+          </li>
+          <li>Edits after the last save, and states older than <code>'undolevels'</code> keeps, are gone.</li>
+          <li>
+            Rebuilding text needs the source as it was at the last save. The undo file stores changes, not copies of the
+            file.
+          </li>
+          <li>
+            Undo format 3, as Neovim 0.12.5 writes it on Linux x86-64, is the one tested. Other producers are unverified.
+          </li>
+          <li>Text must be UTF-8 with LF line endings. Anything else is refused with the reason.</li>
+        </ul>
+        <p>
+          The <a href={`${docs}/troubleshooting.md`}>troubleshooting guide</a> explains what to do when a state is missing.
+        </p>
+      </div>
+      <div class="prose">
+        <h3>Turn on persistent undo</h3>
+        <p>Neovim keeps undo history on disk only with <code>'undofile'</code> set. Add this to your <code>init.lua</code>:</p>
+        <Command label="Turn on persistent undo in init.lua" lines={["vim.o.undofile = true"]} />
+        <p>From then on, every save writes the history xunhen reads.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="ledger" aria-labelledby="install">
+    <h2 class="margin" id="install">Install</h2>
+    <div class="column split">
+      <div class="prose">
+        <p>No release has been published yet. Until the first one, build xunhen from a clone with Go 1.27.1:</p>
+        <Command
+          label="Build xunhen from a clone"
+          lines={[
+            "git clone https://github.com/nuggocto/xunhen.git",
+            "cd xunhen",
+            "CGO_ENABLED=0 go build -trimpath -o bin/xunhen ./cmd/xunhen",
+          ]}
+        />
+        <p>The executable is <code>bin/xunhen</code>. Copy it anywhere on your <code>PATH</code>.</p>
+      </div>
+      <div class="prose">
+        <h3>With the first release</h3>
+        <p>The <a href={`${docs}/install.md`}>install guide</a> covers each of these, with upgrades and removal:</p>
+        <ul>
+          {
+            channels.map((c) => (
+              <li>
+                <a href={`${docs}/install.md#${c.anchor}`}>{c.name}</a>,{" "}
+                {c.note.map((part) => (Array.isArray(part) ? <code>{part[0]}</code> : part))}
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  section.ledger > .margin,
+  section.ledger > .column {
+    padding-block: 2.75rem;
+  }
+
+  .hero > .margin,
+  .hero > .column {
+    padding-block: 2rem 4rem;
+  }
+
+  /* On a wide screen the promises sit beside the pitch and the demo runs
+     under both; on a narrow one they follow the demo, which stays near the
+     top. */
+  .hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "pitch" "demo" "never";
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  .pitch {
+    grid-area: pitch;
+  }
+
+  .never {
+    grid-area: never;
+  }
+
+  .demo {
+    grid-area: demo;
+    min-width: 0;
+  }
+
+  @media (min-width: 84rem) {
+    .hero-grid {
+      grid-template-columns: minmax(0, var(--measure)) minmax(22rem, 1fr);
+      grid-template-areas: "pitch never" "demo demo";
+      column-gap: 3.5rem;
+    }
+
+    /* Level with the headline, under the verse. */
+    .never {
+      padding-top: 2.85rem;
+    }
+  }
+
+  .never h2 {
+    margin-bottom: 0.75rem;
+  }
+
+  /* 寻痕, as on a rubbing: a fine grain where the paper shows through. */
+  .hero :global(.brush) {
+    display: block;
+    width: var(--display);
+    height: calc(var(--display) * 2);
+    margin-left: auto;
+    color: var(--paper);
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -14 9.6'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+    mask-size: 200px 200px;
+  }
+
+  .verse {
+    color: var(--faint);
+    font-style: italic;
+  }
+
+  h2.margin {
+    font-weight: 650;
+  }
+
+  .steps,
+  ul {
+    padding-left: 1.25rem;
+  }
+
+  .steps li + li,
+  ul li + li {
+    margin-top: 0.6rem;
+  }
+
+  .commands {
+    display: grid;
+    gap: 1.1rem;
+  }
+
+  .commands dd {
+    margin: 0.2rem 0 0;
+  }
+
+  @media (max-width: 52rem) {
+    section.ledger > .margin {
+      padding-bottom: 1rem;
+    }
+
+    section.ledger > .column {
+      padding-top: 0;
+    }
+
+    .hero :global(.brush) {
+      margin-left: 0;
+    }
+  }
+</style>
