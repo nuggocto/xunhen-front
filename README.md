@@ -67,6 +67,25 @@ release: https://github.com/nuggocto/xunhen/releases/tag/vX.Y.Z
 Notes come from published tags only, and the site never fetches release
 data in the visitor's browser.
 
+### When xunhen publishes a release
+
+Update the site only after the release and each channel it names are
+public and tested, in this order:
+
+1. Add `src/content/changelog/X.Y.Z.md` with the tag's section of
+   `CHANGELOG.md`, the date the GitHub release was published, and its
+   release URL.
+2. Remove those notes from `unreleased.md`, or delete the file when nothing
+   remains unreleased.
+3. On the home page, replace "No release has been published yet" and the
+   build-from-clone fallback with the channels that are live: the release
+   archive, the tagged Nix flake, and the AUR package once its recipe is
+   published.
+4. Use the released version in every command and link. Never write a date,
+   version, or download that no published tag has.
+5. Run `pnpm run build`, look at the branch's preview deployment, then push
+   to `shrek`.
+
 ## Deploy
 
 Cloudflare Pages builds this repository:
