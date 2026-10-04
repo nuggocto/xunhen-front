@@ -5,9 +5,12 @@ import Brush from "../components/Brush.astro";
 interface Props {
   title: string;
   description: string;
+  // False for a page that has no address of its own, such as the 404 page,
+  // which Pages serves at whatever address was missing.
+  indexed?: boolean;
 }
 
-const { title, description } = Astro.props;
+const { title, description, indexed = true } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const repository = "https://github.com/nuggocto/xunhen";
 
@@ -25,14 +28,14 @@ const current = Astro.url.pathname.replace(/\/?$/, "/");
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
+    {indexed ? <link rel="canonical" href={canonical} /> : <meta name="robots" content="noindex" />}
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta name="theme-color" content="#1b1a17" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="xunhen" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:url" content={canonical} />
+    {indexed && <meta property="og:url" content={canonical} />}
   </head>
   <body>
     <a class="skip visually-hidden" href="#content">Skip to content</a>
