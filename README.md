@@ -92,7 +92,43 @@ search results, so only `xunhen.org` is indexed. The site needs no adapter
 and no Pages Functions.
 
 `pnpm dlx wrangler pages dev dist` serves a build locally with those headers
-applied.
+applied. GitHub Actions (`.github/workflows/ci.yml`) runs the same install
+and build on every push and pull request.
+
+### Domain
+
+`xunhen.org` is a zone in the same Cloudflare account, on Cloudflare's
+nameservers (`alfred.ns.cloudflare.com` and `dara.ns.cloudflare.com`). It is
+attached to the Pages project as a custom domain, which created its DNS
+record and its certificate; Cloudflare renews the certificate and redirects
+HTTP to HTTPS. `www.xunhen.org` does not exist. To add it, attach it as a
+second custom domain and redirect it to `https://xunhen.org` so the apex
+stays the one canonical address.
+
+### Roll back
+
+A rollback serves an earlier production deployment again without a build.
+In the dashboard: Workers & Pages, `xunhen-front`, Deployments, then
+"Rollback to this deployment" on the one to restore. From a shell:
+
+```sh
+pnpm dlx wrangler pages deployment list --project-name xunhen-front
+curl -X POST -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+  "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/pages/projects/xunhen-front/deployments/$DEPLOYMENT_ID/rollback"
+```
+
+The change is live within seconds; rolling forward is a rollback to the
+newer deployment. A rollback does not change `shrek`, and the next push
+deploys again, so fix the cause in git as well. Tested on 2026-10-04: back
+from `b59e6a8` to `82fb750` and forward again, each live within 15 seconds.
+
+### Correct a stale release link
+
+Install links and release notes live in this repository, not in the
+application's release. To correct a wrong version, link, or note, edit the
+page or `src/content/changelog/`, check it with `pnpm run build`, and push
+to `shrek`; the site updates without a new xunhen release. If a bad
+deployment is already live, roll back first, then push the fix.
 
 ## Credits
 
