@@ -9,6 +9,9 @@ const entries = (await getCollection("changelog")).sort((a, b) => {
   return (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0);
 });
 const released = entries.some((entry) => entry.data.version !== "unreleased");
+// A version with a hyphen, such as 1.0.0-rc.1, is a prerelease for testing.
+const prerelease = (version: string) => version !== "unreleased" && version.includes("-");
+const stable = entries.some((entry) => entry.data.version !== "unreleased" && !prerelease(entry.data.version));
 
 const day = new Intl.DateTimeFormat("en", { dateStyle: "long", timeZone: "UTC" });
 
@@ -42,6 +45,14 @@ const rendered = await Promise.all(
           </p>
         )
       }
+      {
+        released && !stable && (
+          <p class="prose">
+            No stable release yet. The releases below are candidates, published so the first stable release can be
+            tested before it ships.
+          </p>
+        )
+      }
     </div>
   </section>
 
@@ -59,6 +70,7 @@ const rendered = await Promise.all(
               <time datetime={entry.data.date?.toISOString().slice(0, 10)}>{entry.data.date && day.format(entry.data.date)}</time>
             </p>
           )}
+          {prerelease(entry.data.version) && <p class="faint">Release candidate, for testing</p>}
           {entry.data.release && (
             <p>
               <a class="faint" href={entry.data.release}>

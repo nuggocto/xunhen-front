@@ -86,6 +86,12 @@ public and tested, in this order:
 5. Run `pnpm run build`, look at the branch's preview deployment, then push
    to `shrek`.
 
+A release candidate, such as `1.0.0-rc.1`, follows the same steps. The
+changelog labels any version with a hyphen as a candidate, and says there
+is no stable release yet while candidates are all there is. Keep the home
+page's install commands on the newest candidate until the first stable
+release replaces them, and leave the AUR package for that stable release.
+
 ## Deploy
 
 Cloudflare Pages builds this repository:
