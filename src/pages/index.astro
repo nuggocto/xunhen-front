@@ -5,7 +5,7 @@ import Browse from "../components/Browse.astro";
 import Command from "../components/Command.astro";
 import Transcript from "../components/Transcript.astro";
 
-const docs = "https://github.com/nuggocto/xunhen/blob/shrek/docs";
+const repository = "https://github.com/nuggocto/xunhen";
 
 // The newest published release.
 const current = "1.0.0";
@@ -13,10 +13,10 @@ const releases = "https://github.com/nuggocto/xunhen/releases";
 
 // Each channel's note: plain text, with the parts in `code` set as code.
 const channels = [
-  { name: "Release archive", anchor: "release-archive", note: ["with checksums, into ", ["~/.local/bin"], " without root"] },
-  { name: "Nix flake", anchor: "nix-and-nixos", note: ["for a user profile or a NixOS configuration"] },
-  { name: "AUR package", anchor: "arch-user-repository", note: ["built with ", ["makepkg"]] },
-  { name: "Go source", anchor: "go-source", note: ["with ", ["go install"]] },
+  { name: "Release archive", href: `${releases}/tag/v${current}`, note: ["with checksums, into ", ["~/.local/bin"], " without root"] },
+  { name: "Nix flake", href: `${repository}#nix--nixos`, note: ["for a user profile or a NixOS configuration"] },
+  { name: "AUR package", href: "https://aur.archlinux.org/packages/xunhen", note: ["built with ", ["makepkg"]] },
+  { name: "Go source", href: repository, note: ["with ", ["go install"]] },
 ];
 
 const commands = [
@@ -111,8 +111,9 @@ const commands = [
           }
         </dl>
         <p>
-          <code>:echo &amp;undodir</code> in Neovim prints where your undo files are. The{" "}
-          <a href={`${docs}/usage.md`}>usage guide</a> walks through a complete recovery and lists every flag.
+          <code>:echo &amp;undodir</code> in Neovim prints where your undo files are, and{" "}
+          <code>xunhen help COMMAND</code> lists every flag. The <a href={`${repository}#usage`}>README</a> has the
+          browser's keys.
         </p>
       </div>
       <Transcript
@@ -151,7 +152,8 @@ const commands = [
           <li>Text must be UTF-8 with LF line endings. Anything else is refused with the reason.</li>
         </ul>
         <p>
-          The <a href={`${docs}/troubleshooting.md`}>troubleshooting guide</a> explains what to do when a state is missing.
+          Report problems in the <a href={`${repository}/issues/new`}>issue tracker</a> with synthetic files: real undo
+          files can contain deleted secrets.
         </p>
       </div>
       <div class="prose">
@@ -196,12 +198,12 @@ const commands = [
       </div>
       <div class="prose">
         <h3>Every channel</h3>
-        <p>The <a href={`${docs}/install.md`}>install guide</a> covers each of these, with upgrades and removal:</p>
+        <p>Where each channel lives:</p>
         <ul>
           {
             channels.map((c) => (
               <li>
-                <a href={`${docs}/install.md#${c.anchor}`}>{c.name}</a>,{" "}
+                <a href={c.href}>{c.name}</a>,{" "}
                 {c.note.map((part) => (Array.isArray(part) ? <code>{part[0]}</code> : part))}
               </li>
             ))
