@@ -2,11 +2,22 @@
 import { getCollection, render } from "astro:content";
 import Base from "../layouts/Base.astro";
 
-// Unreleased notes first, then releases, newest first.
+// Unreleased notes first, then releases, newest first. On the same date, a
+// release comes before its own candidates, and otherwise the higher version
+// comes first.
+const newer = (a: string, b: string) => {
+  const [coreA, preA = ""] = a.split("-", 2);
+  const [coreB, preB = ""] = b.split("-", 2);
+  const order = coreB.localeCompare(coreA, "en", { numeric: true });
+  if (order !== 0) return order;
+  if (!preA || !preB) return preA ? 1 : preB ? -1 : 0;
+  return preB.localeCompare(preA, "en", { numeric: true });
+};
 const entries = (await getCollection("changelog")).sort((a, b) => {
   if (a.data.version === "unreleased") return -1;
   if (b.data.version === "unreleased") return 1;
-  return (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0);
+  const byDate = (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0);
+  return byDate !== 0 ? byDate : newer(a.data.version, b.data.version);
 });
 const released = entries.some((entry) => entry.data.version !== "unreleased");
 // A version with a hyphen, such as 1.0.0-rc.1, is a prerelease for testing.

@@ -7,15 +7,15 @@ import Transcript from "../components/Transcript.astro";
 
 const docs = "https://github.com/nuggocto/xunhen/blob/shrek/docs";
 
-// The newest published release. It is a candidate: no stable release yet.
-const candidate = "1.0.0-rc.1";
+// The newest published release.
+const current = "1.0.0";
 const releases = "https://github.com/nuggocto/xunhen/releases";
 
 // Each channel's note: plain text, with the parts in `code` set as code.
 const channels = [
   { name: "Release archive", anchor: "release-archive", note: ["with checksums, into ", ["~/.local/bin"], " without root"] },
   { name: "Nix flake", anchor: "nix-and-nixos", note: ["for a user profile or a NixOS configuration"] },
-  { name: "AUR package", anchor: "arch-user-repository", note: ["built with ", ["makepkg"], ", from the first stable release"] },
+  { name: "AUR package", anchor: "arch-user-repository", note: ["built with ", ["makepkg"]] },
   { name: "Go source", anchor: "go-source", note: ["with ", ["go install"]] },
 ];
 
@@ -168,14 +168,13 @@ const commands = [
     <div class="column split">
       <div class="prose">
         <p>
-          There is no stable release yet. The release candidate{" "}
-          <a href={`${releases}/tag/v${candidate}`}>v{candidate}</a> is published for testing. Install it for your user
+          The current release is <a href={`${releases}/tag/v${current}`}>xunhen {current}</a>. Install it for your user
           alone, on Linux 5.10 or later on x86-64:
         </p>
         <Command
-          label="Install the release candidate into ~/.local/bin"
+          label="Install xunhen into ~/.local/bin"
           lines={[
-            `version=${candidate}`,
+            `version=${current}`,
             `base="${releases}/download/v$version"`,
             'curl -fLO "$base/xunhen_${version}_linux_amd64.tar.gz"',
             'curl -fLO "$base/SHA256SUMS.txt"',
@@ -184,11 +183,15 @@ const commands = [
             'install -Dm755 "xunhen_${version}_linux_amd64/xunhen" "$HOME/.local/bin/xunhen"',
           ]}
         />
-        <p>Or with Nix, or from Go source:</p>
-        <Command label="Install the release candidate with Nix" lines={[`nix profile add github:nuggocto/xunhen/v${candidate}`]} />
+        <p>Or with Nix, from the <a href="https://aur.archlinux.org/packages/xunhen">AUR</a>, or from Go source:</p>
+        <Command label="Install xunhen with Nix" lines={[`nix profile add github:nuggocto/xunhen/v${current}`]} />
         <Command
-          label="Install the release candidate with Go"
-          lines={[`CGO_ENABLED=0 go install github.com/nuggocto/xunhen/cmd/xunhen@v${candidate}`]}
+          label="Build and install the AUR package"
+          lines={["git clone https://aur.archlinux.org/xunhen.git", "cd xunhen", "makepkg --syncdeps --install"]}
+        />
+        <Command
+          label="Install xunhen with Go"
+          lines={[`CGO_ENABLED=0 go install github.com/nuggocto/xunhen/cmd/xunhen@v${current}`]}
         />
       </div>
       <div class="prose">
