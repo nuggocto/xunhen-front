@@ -20,8 +20,9 @@ pnpm run preview   # serves dist/
 Dependencies may not run install scripts unless `pnpm-workspace.yaml`
 allows them; none currently needs one.
 
-`pnpm run build` fails on a type error or on release notes whose metadata
-does not validate.
+`pnpm run build` fails on a type error, on release notes whose metadata does
+not validate, or when `public/install.sh` is not the published `install.sh`
+that `src/release.ts` names.
 
 ## What is where
 
@@ -32,7 +33,10 @@ src/components/       Browse: the replica of xunhen browse; Transcript: a comman
 src/layouts/Base.astro  header tabs, footer, page metadata
 src/styles/global.css   colours, type, sizes, the shared two-column layout
 src/content/changelog/  one Markdown file per release
+src/release.ts          the current release and the SHA-256 of its install.sh
+public/install.sh       a byte-for-byte copy of that release's install.sh, served as text
 public/_headers         Content-Security-Policy and other headers for Cloudflare Pages
+scripts/check-installer.mjs  fails the build when public/install.sh is not that copy
 ```
 
 The page uses no colour, as xunhen's terminal browser uses none: emphasis
@@ -82,8 +86,13 @@ public and tested, in this order:
    archive, the tagged Nix flake, and the AUR package once its recipe is
    published.
 4. Use the released version in every command and link. Never write a date,
-   version, or download that no published tag has.
-5. Run `pnpm run build`, look at the branch's preview deployment, then push
+   version, or download that no published tag has. Set `current` in
+   `src/release.ts`.
+5. Download the release's `install.sh` into `public/install.sh` without
+   changing a byte, and set `installerSha256` in `src/release.ts` to its
+   SHA-256. Check that hash against the release's `SHA256SUMS.txt` first.
+   `.gitattributes` keeps Git from converting its line endings.
+6. Run `pnpm run build`, look at the branch's preview deployment, then push
    to `shrek`.
 
 A release candidate, such as `1.0.0-rc.1`, follows the same steps. The

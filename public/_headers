@@ -5,6 +5,10 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=()
   Cross-Origin-Opener-Policy: same-origin
 
+# curl and browsers read the installer as text.
+/install.sh
+  Content-Type: text/plain; charset=utf-8
+
 # Only xunhen.org is indexed: the pages.dev addresses of production and of
 # every preview stay out of search results.
 https://:project.pages.dev/*

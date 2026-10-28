@@ -1,0 +1,2 @@
+# The served installer must stay byte-identical to the release asset.
+public/install.sh -text
