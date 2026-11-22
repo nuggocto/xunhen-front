@@ -12,7 +12,7 @@ const releases = "https://github.com/nuggocto/xunhen/releases";
 
 // Each channel's note: plain text, with the parts in `code` set as code.
 const channels = [
-  { name: "Install script", href: "/install.sh", note: ["a copy of the release's ", ["install.sh"], ", into ", ["~/.local/bin"], " without root"] },
+  { name: "Install script", href: `${releases}/latest/download/install.sh`, note: ["the latest release's ", ["install.sh"], ", into ", ["~/.local/bin"], " without root"] },
   { name: "Release archive", href: `${releases}/tag/v${current}`, note: ["with checksums, to install by hand"] },
   { name: "Nix flake", href: `${repository}#nix--nixos`, note: ["for a user profile or a NixOS configuration"] },
   { name: "AUR package", href: "https://aur.archlinux.org/packages/xunhen", note: ["with ", ["yay"], " or any AUR helper"] },
@@ -173,7 +173,10 @@ const commands = [
           The current release is <a href={`${releases}/tag/v${current}`}>xunhen {current}</a>. Install it for your user
           alone, on Linux 5.10 or later on x86-64:
         </p>
-        <Command label="Install xunhen into ~/.local/bin" lines={["curl -fsS https://xunhen.org/install.sh | sh"]} />
+        <Command
+          label="Install xunhen into ~/.local/bin"
+          lines={[`curl -fsSL ${releases}/latest/download/install.sh | sh`]}
+        />
         <p>
           The script checks the release archive against the SHA-256 it records before replacing anything, and a
           download that stops partway runs nothing. To choose another directory, pipe it to <code
